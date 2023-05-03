@@ -1,0 +1,111 @@
+name: Deploy Django app to EC2 using Ansible
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  TF_VAR_region: ${{ secrets.TF_VAR_REGION }}
+  TF_VAR_ami: ${{ secrets.TF_VAR_AMI }}
+  TF_VAR_key_name: ${{ secrets.TF_VAR_KEY_NAME }}
+  EC2_INSTANCE_USERNAME: ubuntu
+  EC2_INSTANCE_PRIVATE_KEY: ${{ secrets.EC2_INSTANCE_PRIVATE_KEY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code from GitHub
+        uses: actions/checkout@v2
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.4
+
+      - name: Initialize Terraform
+        run: |
+          cd terraform
+          terraform init \
+            -backend-config="bucket=django-ansible-bucket" \
+            -backend-config="key=terraform.tfstate" \
+            -backend-config="region=ap-northeast-1"
+
+      - name: Plan Terraform
+        id: plan
+        run: |
+          cd terraform
+          terraform plan -out=plan.tfplan
+
+      - name: Apply Terraform
+        id: apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve plan.tfplan
+        env:
+          TF_CLI_AUTO_APPROVE: 1 
+
+#      - name: Wait for EC2 instance to be created
+#        uses: aws-actions/wait-for-ec2-instance@v1
+#        with:
+#          instance-id: ${{ steps.apply.outputs.instance_id }}
+#          fail-on-timeout: true
+#          timeout: '2m'    
+
+      - name: Get EC2 Public IP
+        id: ec2-public-ip
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Retrieve EC2 Public IP    
+        run: |
+          echo "::set-output name=public_ip::$(aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running' --query 'Reservations[].Instances[].PublicIpAddress' --output text)"
+        id: extract-public-ip 
+
+      - name: Set hostname
+        run: |
+          echo "HOSTNAME=$(echo ${{ steps.ec2-public-ip.outputs.public_ip }})" >> $GITHUB_ENV
+  
+      - name: Install Ansible on EC2
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_INSTANCE_PRIVATE_KEY }}
+          USER_NAME: ${{ env.EC2_INSTANCE_USERNAME }}
+          HOSTNAME: ${{ steps.extract-public-ip.outputs.public_ip }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME}  '
+          sudo apt update
+          sudo apt install -y software-properties-common
+          sudo apt-add-repository --yes --update ppa:ansible/ansible
+          sudo apt install -y ansible
+          sudo apt-get install -y supervisor nginx
+          sudo rm -f /etc/nginx/sites-enabled/default
+          '
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3 
+        
+      - name: Deploy Django app using Ansible
+        env:
+          PRIVATE_KEY: ${{ secrets.EC2_INSTANCE_PRIVATE_KEY }}
+          HOSTNAME: ${{ steps.extract-public-ip.outputs.public_ip }}
+          USER_NAME: ${{ env.EC2_INSTANCE_USERNAME }}
+        run: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
+          ansible-playbook -i ansible/inventory.ini ansible/deployment.yml -u ubuntu --private-key private_key -vvv
+
+      - name: Wait for Django app to become available
+        env:
+          EC2_PUBLIC_IP: ${{ steps.extract-public-ip.outputs.public_ip }}
+        run: |
+          wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
+          chmod +x wait-for-it.sh
+          ./wait-for-it.sh $EC2_PUBLIC_IP:8002/todos -t 120 -- echo "Django app is now available!"
+    
+

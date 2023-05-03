@@ -1,0 +1,16 @@
+[Unit]
+Description=gunicorn daemon
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/new-django
+ExecStart=/home/ubuntu/new-django/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          todoApp.wsgi:application --bind 0.0.0.0:8002
+
+[Install]
+WantedBy=multi-user.target
