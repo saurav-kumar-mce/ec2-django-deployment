@@ -1,0 +1,17 @@
+---
+- name: Configure Nginx
+  copy:
+    src: "{{ app_path }}/devops/nginx.conf"
+    dest: "{{ nginx_conf_path }}"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Reload Nginx
+
+- name: Enable Nginx site
+  file:
+    src: "{{ nginx_conf_path }}"
+    dest: "/etc/nginx/sites-enabled/django"
+    state: link

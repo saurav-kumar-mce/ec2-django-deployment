@@ -1,0 +1,10 @@
+---
+- name: Reload Nginx
+  systemd:
+    name: nginx
+    state: reloaded
+
+- name: Restart Gunicorn
+  systemd:
+    name: gunicorn
+    state: restarted

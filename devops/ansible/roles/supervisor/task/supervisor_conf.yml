@@ -1,0 +1,8 @@
+--- 
+- name: Configure Supervisor
+  copy:
+    src: "{{ app_path }}/devops/supervisor.conf"
+    dest: "{{ supervisor_conf_path }}"
+    remote_src: yes
+  notify:
+    - Restart Supervisor

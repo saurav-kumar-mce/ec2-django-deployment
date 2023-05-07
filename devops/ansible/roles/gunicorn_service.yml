@@ -1,0 +1,26 @@
+---
+- name: Configure Gunicorn service
+  copy:
+    src: "{{ app_path }}/devops/gunicorn.service"
+    dest: "{{ gunicorn_service_path }}"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Start Gunicorn
+  shell: |
+    source /home/ubuntu/new-django/venv/bin/activate
+    cd /home/ubuntu/new-django/
+    gunicorn todoApp.wsgi:application --bind 0.0.0.0:8002
+  environment:
+    PATH: "/home/ubuntu/new-django/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  notify:
+    - Reload Nginx
+    
+
+- name: Start Gunicorn
+  systemd:
+    name: gunicorn
+    state: started
+    enabled: yes

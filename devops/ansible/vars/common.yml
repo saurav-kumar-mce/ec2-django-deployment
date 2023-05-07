@@ -1,0 +1,8 @@
+---
+- app_name: "todoApp"
+  app_repo: "https://github.com/saurav-kumar-mce/new-django.git"
+  app_path: "/home/ubuntu/new-django"
+  virtualenv_path: "/home/ubuntu/new-django/venv"
+  nginx_conf_path: "/etc/nginx/sites-available/django"
+  supervisor_conf_path: "/etc/supervisor/conf.d/supervisor.conf"
+  gunicorn_service_path: "/etc/systemd/system/gunicorn.service"
