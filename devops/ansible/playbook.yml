@@ -1,97 +1,18 @@
+# Deploy Django application playbook
+# This playbook installs and configures a Django application on remote webservers
 ---
-- name: Install dependencies
-  become: true
-  hosts: webservers
-  tasks:
-    - name: Update package list
-      apt:
-        update_cache: yes
-
-    - name: Install Python and pip
-      apt:
-        name:
-          - python3
-          - python3-pip
-          - python3.10-venv
-        state: latest
-
-    - name: Install required packages
-      pip:
-        name: "{{ item }}"
-      with_items:
-        - Django
-        - gunicorn
-        - psycopg2-binary
-        - django_extensions
-
 - name: Deploy Django application
-  become: true
-  hosts: webservers
-  tasks:
-    - name: Clone repository
-      git:
-        repo: https://github.com/saurav-kumar-mce/new-django.git
-        dest: "/home/ubuntu/new-django"
-        clone: yes
-        update: yes
-        force: yes
+  hosts: webservers # Define the webservers that the application will be deployed to
+  become: true # Become the root user on the webservers to run privileged tasks
 
-    - name: Create virtual environment
-      command: python3 -m venv /home/ubuntu/new-django/myvenv
-      args:
-        creates: /home/ubuntu/new-django/myvenv
-
-#    - name: Install Python packages in virtual environment
-#      pip:
-#        requirements: /home/ubuntu/new-django/requirements.txt
-#        virtualenv: /home/ubuntu/new-django/myvenv
-
-    - name: Configure Nginx
-      copy:
-        src: "/home/ubuntu/new-django/devops/nginx.conf"
-        dest: /etc/nginx/sites-available/django
-        remote_src: yes
-        owner: root
-        group: root
-        mode: '0644'
-    
-    - name: Enable Nginx site
-      file:
-        src: /etc/nginx/sites-available/django
-        dest: /etc/nginx/sites-enabled/django
-        state: link
-
-    - name: Configure Supervisor
-      copy:
-        src: "/home/ubuntu/new-django/devops/supervisor.conf"
-        dest: /etc/supervisor/conf.d/django.conf
-        remote_src: yes 
-    
-    - name: Configure gunicorn
-      copy:
-        src: "/home/ubuntu/new-django/devops/gunicorn.service"
-        dest: /etc/supervisor/conf.d/gunicorn.service
-        remote_src: yes
-        
-    - name: Start Gunicorn
-      shell: |
-        source /home/ubuntu/new-django/myvenv/bin/activate
-        cd /home/ubuntu/new-django/
-        python manage.py makemigrations
-        python manage.py migrate
-        gunicorn todoApp.wsgi:application --bind 0.0.0.0:8002
-      environment:
-        PATH: "/home/ubuntu/new-django/myvenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-      notify:
-        - Reload Nginx
-
-  handlers:
-    - name: Restart Gunicorn
-      systemd:
-        name: gunicorn
-        state: restarted
-
-    - name: Reload Nginx
-      systemd:
-        name: nginx
-        state: reloaded
+# Include the roles needed to deploy the Django application
+  roles:
+    - python  # Install Python and pip
+#    - django  # Clone Django app repository, install dependencies, and run migrations
+    - nginx   # configure Nginx as reverse proxy for Django app
+    - supervisor # Install and configure Supervisor to manage Gunicorn process
+    - gunicorn   # configure Gunicorn to run Django app
+    - handlers   # restart services if configuration files change.
+  vars_files:
+    - vars/common.yml   # Load common variables
+#    - vars/secrets.yml  # Load encrypted variables for sensitive data

@@ -1,3 +1,4 @@
+# ansible/roles/gunicorn/tasks/main.yml 
 ---
 - name: Configure Gunicorn service
   copy:
@@ -9,6 +10,7 @@
     mode: '0644'
 
 - name: Start Gunicorn
+# Activate the virtualenv, change to the app directory and start gunicorn using the command-line interface.
   shell: |
     source /home/ubuntu/new-django/venv/bin/activate
     cd /home/ubuntu/new-django/
@@ -17,10 +19,3 @@
     PATH: "/home/ubuntu/new-django/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   notify:
     - Reload Nginx
-    
-
-- name: Start Gunicorn
-  systemd:
-    name: gunicorn
-    state: started
-    enabled: yes

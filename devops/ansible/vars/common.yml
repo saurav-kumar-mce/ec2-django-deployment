@@ -1,8 +1,23 @@
 ---
-- app_name: "todoApp"
-  app_repo: "https://github.com/saurav-kumar-mce/new-django.git"
-  app_path: "/home/ubuntu/new-django"
-  virtualenv_path: "/home/ubuntu/new-django/venv"
-  nginx_conf_path: "/etc/nginx/sites-available/django"
-  supervisor_conf_path: "/etc/supervisor/conf.d/supervisor.conf"
-  gunicorn_service_path: "/etc/systemd/system/gunicorn.service"
+# This file contains common variables used throughout the Ansible playbook.
+
+# Name of the Django application
+app_name: "todoApp"
+
+# Git repository URL for the Django application
+app_repo: "https://github.com/saurav-kumar-mce/new-django.git"
+
+# Path on the remote server where the Django application will be cloned
+app_path: "/home/ubuntu/new-django"
+
+# Path on the remote server where the Python virtual environment for the Django application will be created
+virtualenv_path: "/home/ubuntu/new-django/venv"
+
+# Path on the remote server where the Nginx configuration file will be created
+nginx_conf_path: "/etc/nginx/sites-available/django"
+
+# Path on the remote server where the Supervisor configuration file will be created
+supervisor_conf_path: "/etc/supervisor/conf.d/supervisor.conf"
+
+# Path on the remote server where the Gunicorn service file will be created
+gunicorn_service_path: "/etc/systemd/system/gunicorn.service"

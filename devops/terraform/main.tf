@@ -11,7 +11,7 @@ resource "aws_instance" "django-ansible" {
 
 
 output "instance_id" {
-  value = aws_instance.django-ansible.instance_id
+  value = aws_instance.django-ansible.id
 }
 
 output "public_ip" {

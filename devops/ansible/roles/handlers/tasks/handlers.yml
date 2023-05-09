@@ -1,9 +1,11 @@
 ---
+# Reload Nginx to apply configuration changes
 - name: Reload Nginx
   systemd:
     name: nginx
     state: reloaded
 
+# Restart Gunicorn after applying configuration changes
 - name: Restart Gunicorn
   systemd:
     name: gunicorn
