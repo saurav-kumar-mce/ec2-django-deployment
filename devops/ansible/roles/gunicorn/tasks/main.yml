@@ -1,21 +1,22 @@
-# ansible/roles/gunicorn/tasks/main.yml 
----
+# ansible/roles/gunicorn/tasks/main.yml
+
+# Task to configure the Gunicorn service by copying the gunicorn.service file to the destination path
 - name: Configure Gunicorn service
   copy:
-    src: "{{ app_path }}/devops/gunicorn.service"
+    src: "{{ app_path }}/<src_folder>/gunicorn.service"  
     dest: "{{ gunicorn_service_path }}"
     remote_src: yes
     owner: root
     group: root
     mode: '0644'
 
+# Task to start the Gunicorn service by activating the virtual environment, changing to the project directory and running the Gunicorn command
 - name: Start Gunicorn
-# Activate the virtualenv, change to the app directory and start gunicorn using the command-line interface.
   shell: |
-    source /home/ubuntu/new-django/venv/bin/activate
-    cd /home/ubuntu/new-django/
-    gunicorn todoApp.wsgi:application --bind 0.0.0.0:8002
+    source {{ venv_path }}/bin/activate 
+    cd {{ app_path }}
+    gunicorn {{ wsgi_module }}:application --bind {{ gunicorn_bind_address }}  
   environment:
-    PATH: "/home/ubuntu/new-django/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    PATH: "{{ venv_path }}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"  # Set the PATH environment variable to include the virtual environment's bin directory and system directories
   notify:
-    - Reload Nginx
+    - Reload Nginx  # Notify the Nginx handler to reload the configuration when this task completes successfully
