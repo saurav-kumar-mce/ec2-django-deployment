@@ -1,16 +1,17 @@
 [Unit]
-Description=gunicorn daemon
+Description=Gunicorn service
 After=network.target
 
 [Service]
-User=ubuntu
-Group=www-data
-WorkingDirectory=/home/ubuntu/new-django
-ExecStart=/home/ubuntu/new-django/venv/bin/gunicorn \
+User=<your username>
+Group=<your group name>
+WorkingDirectory=<path to your Django project directory>
+ExecStart=<path to your virtual environment>/bin/gunicorn \
           --access-logfile - \
-          --workers 3 \
+          --workers <number of Gunicorn worker processes to spawn> \
           --bind unix:/run/gunicorn.sock \
-          todoApp.wsgi:application --bind 0.0.0.0:8002
+          <name of your Django project>.wsgi:application --bind 0.0.0.0:<port number>
 
 [Install]
 WantedBy=multi-user.target
+

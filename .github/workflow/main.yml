@@ -25,36 +25,28 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 1.1.4
+          terraform_version: <terraform-version>
 
       - name: Initialize Terraform
         run: |
-          cd terraform
+          cd <PATH_TO_TERRAFORM>
           terraform init \
-            -backend-config="bucket=django-ansible-bucket" \
+            -backend-config="<terraform-backend-bucket>" \
             -backend-config="key=terraform.tfstate" \
-            -backend-config="region=ap-northeast-1"
-
+            -backend-config="region=${{ secrets.AWS_REGION }}"
       - name: Plan Terraform
         id: plan
         run: |
-          cd terraform
+          cd <PATH_TO_TERRAFORM>
           terraform plan -out=plan.tfplan
 
       - name: Apply Terraform
         id: apply
         run: |
-          cd terraform
+          cd <PATH_TO_TERRAFORM>
           terraform apply -auto-approve plan.tfplan
         env:
-          TF_CLI_AUTO_APPROVE: 1 
-
-#      - name: Wait for EC2 instance to be created
-#        uses: aws-actions/wait-for-ec2-instance@v1
-#        with:
-#          instance-id: ${{ steps.apply.outputs.instance_id }}
-#          fail-on-timeout: true
-#          timeout: '2m'    
+          TF_CLI_AUTO_APPROVE: 1    
 
       - name: Get EC2 Public IP
         id: ec2-public-ip
@@ -88,8 +80,8 @@ jobs:
           sudo apt-get install -y supervisor nginx
           sudo rm -f /etc/nginx/sites-enabled/default
           '
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3 
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3 
         
       - name: Deploy Django app using Ansible
         env:
@@ -98,7 +90,7 @@ jobs:
           USER_NAME: ${{ env.EC2_INSTANCE_USERNAME }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ansible-playbook -i ansible/inventory.ini ansible/deployment.yml -u ubuntu --private-key private_key -vvv
+          ansible-playbook -i <PATH_TO_INVENTORY> <PATH_TO_PLAYBOOK> -u ${USER_NAME} --private-key private_key -vvv
 
       - name: Wait for Django app to become available
         env:
@@ -106,6 +98,8 @@ jobs:
         run: |
           wget https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh
           chmod +x wait-for-it.sh
-          ./wait-for-it.sh $EC2_PUBLIC_IP:8002/todos -t 120 -- echo "Django app is now available!"
+          ./wait-for-it.sh $EC2_PUBLIC_IP:8000/todos -t 120 -- echo "Django app is now available!"
     
+
+
 
