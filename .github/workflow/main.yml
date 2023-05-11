@@ -78,7 +78,6 @@ jobs:
           sudo apt-add-repository --yes --update ppa:ansible/ansible
           sudo apt install -y ansible
           sudo apt-get install -y supervisor nginx
-          sudo rm -f /etc/nginx/sites-enabled/default
           '
 #      - name: Setup tmate session
 #        uses: mxschmitt/action-tmate@v3 
@@ -90,7 +89,7 @@ jobs:
           USER_NAME: ${{ env.EC2_INSTANCE_USERNAME }}
         run: |
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ansible-playbook -i <PATH_TO_INVENTORY> <PATH_TO_PLAYBOOK> -u ${USER_NAME} --private-key private_key -vvv
+          ansible-playbook -i <YOUR_INVENTORY_FILE> <YOUR_PLAYBOOK> -u ${USER_NAME} --private-key private_key -vvv
 
       - name: Wait for Django app to become available
         env:

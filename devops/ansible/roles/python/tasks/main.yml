@@ -1,8 +1,12 @@
 ---
+# Update package list, install Python and pip, and install required packages
+
+# Update the package list on the system
 - name: Update package list
   apt:
     update_cache: yes
 
+# Install Python and pip, as well as the Python virtual environment package
 - name: Install Python and pip
   apt:
     name:
@@ -11,12 +15,13 @@
       - python3-venv
     state: latest
 
+# Install required Python packages using pip
 - name: Install required packages
   pip:
     name: "{{ item }}"
+  # List the required Python packages to be installed
   with_items:
     - Django
     - gunicorn
     - psycopg2-binary
-    - django_extensions  
-     
+    - django_extensions

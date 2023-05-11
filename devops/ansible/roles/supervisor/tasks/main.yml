@@ -1,8 +1,12 @@
---- 
+---
+# Configure Supervisor
+
+# Copy the Supervisor configuration file to the system
 - name: Configure Supervisor
   copy:
-    src: "{{ app_path }}/devops/supervisor.conf"
+    src: "{{ app_path }}/<src_supervisor_conf_path>/supervisor.conf"
     dest: "{{ supervisor_conf_path }}"
     remote_src: yes
+  # Notify the `Restart Supervisor` task to restart Supervisor after the configuration file is copied
   notify:
     - Restart Supervisor

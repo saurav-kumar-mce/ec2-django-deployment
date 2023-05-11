@@ -1,16 +1,24 @@
 ---
-- name: Configure Nginx
+# Configure Nginx for Django application
+
+# Copy the Nginx configuration file to the appropriate location
+- name: Copy Nginx configuration file
   copy:
-    src: "{{ app_path }}/devops/nginx.conf"
+    src: "{{ app_path }}/<src_nginx_conf_path>/nginx.conf"
     dest: "{{ nginx_conf_path }}"
     remote_src: yes
     owner: root
     group: root
     mode: '0644'
-  notify:
-    - Reload Nginx
+  # Reload Nginx after copying the configuration file
 
-- name: Enable Nginx site
+# Remove the default Nginx site configuration
+- name: Remove default Nginx site configuration
+  shell: sudo rm -f /etc/nginx/sites-enabled/default
+  become: true
+
+# Enable the Nginx site for the Django application
+- name: Enable Nginx site for Django application
   file:
     src: "{{ nginx_conf_path }}"
     dest: "/etc/nginx/sites-enabled/django"

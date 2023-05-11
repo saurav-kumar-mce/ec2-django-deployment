@@ -1,4 +1,7 @@
 ---
+# Clone repository, create virtual environment, and run database migrations
+
+# Clone the Git repository containing the Django application code
 - name: Clone repository
   git:
     repo: "{{ app_repo }}"
@@ -7,12 +10,15 @@
     update: yes
     force: yes
 
+# Create a Python virtual environment for the Django application
 - name: Create virtual environment
   command: python3 -m venv "{{ virtualenv_path }}"
   args:
     creates: "{{ virtualenv_path }}"
 
+# Make and run database migrations for the Django application
 - name: Make and run database migrations
   command: python3 {{ app_path }}/manage.py migrate
+  # Set the Django settings module environment variable
   environment:
-    DJANGO_SETTINGS_MODULE: "{{ app_name }}.settings"   
+    DJANGO_SETTINGS_MODULE: "{{ app_name }}.settings"
