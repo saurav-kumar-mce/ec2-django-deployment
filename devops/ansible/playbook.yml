@@ -8,11 +8,13 @@
 # Include the roles needed to deploy the Django application
   roles:
     - python  # Install Python and pip
-#    - django  # Clone Django app repository, install dependencies, and run migrations
-    - nginx   # configure Nginx as reverse proxy for Django app
+    - django  # Clone Django app repository, install dependencies, and run migrations
     - supervisor # Install and configure Supervisor to manage Gunicorn process
     - gunicorn   # configure Gunicorn to run Django app
+    - nginx   # configure Nginx as reverse proxy for Django app
     - handlers   # restart services if configuration files change.
+
   vars_files:
     - vars/common.yml   # Load common variables
+    - vars/extra_vars.yml #gunicorn port which may be change automaticaly if find the port conflict on server.
 #    - vars/secrets.yml  # Load encrypted variables for sensitive data

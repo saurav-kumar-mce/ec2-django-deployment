@@ -1,25 +1,79 @@
----
-# Configure Nginx for Django application
+- name: Check if Nginx configuration exists
+  stat:
+    path: "{{ nginx_conf_path }}"
+  register: nginx_conf_stat
+  # Check if the Nginx configuration file exists
 
-# Copy the Nginx configuration file to the appropriate location
-- name: Copy Nginx configuration file
+- name: Check if Nginx configuration matches
+  shell: "diff {{ nginx_conf_path }} {{ app_path }}/devops/nginx.conf"
+  register: nginx_conf_diff
+  ignore_errors: true
+  # Compare the existing Nginx configuration with the desired configuration
+
+- name: Configure Nginx
   copy:
-    src: "{{ app_path }}/<src_nginx_conf_path>/nginx.conf"
+    src: "{{ app_path }}/devops/nginx.conf"
     dest: "{{ nginx_conf_path }}"
-    remote_src: yes
-    owner: root
-    group: root
     mode: '0644'
-  # Reload Nginx after copying the configuration file
+  notify:
+    - Reload Nginx
+  when:
+    - nginx_conf_stat.stat.exists == false
+    - nginx_conf_diff.rc != 0
+  # Copy the desired Nginx configuration file to the appropriate location if it doesn't exist or is different
 
-# Remove the default Nginx site configuration
-- name: Remove default Nginx site configuration
-  shell: sudo rm -f /etc/nginx/sites-enabled/default
-  become: true
+- name: Check if Nginx site is enabled
+  stat:
+    path: "/etc/nginx/sites-enabled/django"
+  register: nginx_site_enabled
+  # Check if the Nginx site is already enabled
 
-# Enable the Nginx site for the Django application
-- name: Enable Nginx site for Django application
+- name: Enable Nginx site
   file:
     src: "{{ nginx_conf_path }}"
     dest: "/etc/nginx/sites-enabled/django"
     state: link
+  notify:
+    - Reload Nginx
+  when:
+    - nginx_site_enabled.stat.exists == false
+    - nginx_conf_diff.rc != 0
+  # Create a symbolic link to enable the Nginx site if it's not already enabled or the configuration has changed
+
+- name: Check if port {{ gunicorn_port }} is available
+  wait_for:
+    port: "{{ gunicorn_port }}"
+    timeout: 5
+  ignore_errors: true
+  register: port_check
+  # Check if the specified Gunicorn port is available
+
+- name: Find available port
+  set_fact:
+    new_gunicorn_port: "{{ gunicorn_port }}"
+  when: port_check.failed
+  # Find an available port if the specified Gunicorn port is not available
+
+- name: Change Gunicorn port
+  lineinfile:
+    path: "{{ app_path }}/devops/gunicorn.service"
+    regexp: "^ExecStart=/usr/bin/gunicorn"
+    line: "ExecStart=/usr/bin/gunicorn --bind 127.0.0.1:{{ new_gunicorn_port|int + 1 }} myproject.wsgi:application"
+  when: port_check.failed
+  # Update the Gunicorn service file to bind to the new port
+
+- name: Restart Gunicorn
+  systemd:
+    name: gunicorn
+    state: restarted
+  when: port_check.failed
+  # Restart the Gunicorn service if the port was changed
+
+- name: Restart Nginx
+  systemd:
+    name: nginx
+    state: restarted
+  when:
+    - nginx_conf_stat.stat.exists == true
+    - nginx_conf_stat.changed
+  # Restart Nginx if the configuration file was modified
