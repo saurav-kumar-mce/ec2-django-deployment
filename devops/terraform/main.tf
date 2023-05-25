@@ -7,10 +7,11 @@ resource "aws_instance" "django-ansible" {
   instance_type = "t2.micro"
   key_name      = var.key_name
 
-#  vpc_security_group_ids = [aws_security_group.django-ansible.id]
+#  vpc_security_group_ids = [aws_security_group.django-ansible.id]  # uncomment for attach security group which created by terraform.
   
 }
-
+# Note: creating security group with terraform is not recommended.
+# uncomment below terraform resource block to create security group via terraform.
 /**
 resource "aws_security_group" "django-ansible" {
   name        = "django-ansible-sg"

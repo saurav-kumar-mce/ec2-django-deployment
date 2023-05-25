@@ -16,5 +16,4 @@
 
   vars_files:
     - vars/common.yml   # Load common variables
-    - vars/extra_vars.yml #gunicorn port which may be change automaticaly if find the port conflict on server.
 #    - vars/secrets.yml  # Load encrypted variables for sensitive data

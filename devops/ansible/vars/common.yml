@@ -1,6 +1,24 @@
 ---
 # This file contains common variables used throughout the Ansible playbook.
 
+# gunicorn port which may be change automaticaly if find the port conflict on server.
+gunicorn_port: ""
+
+# Placeholder value for nginx configuration i.e. server name.
+server_name: <server_name>
+
+# Placeholder value for nginx configuration i.e. proxy_pass.
+proxy_pass: "localhost:<port>"
+
+# Placeholder value for supervisor i.e. supervisor_user.
+supervisor_user: <supervisor_user>
+
+# Placeholder value for gunicorn configuration i.e. gunicorn_working_directory.
+gunicorn_working_directory: <gunicorn_working_directory>
+
+#  Placeholder value for gunicorn configuration i.e. gunicorn_exec_start.
+gunicorn_exec_start: <gunicorn_exec_start>
+
 # Name of the Django application
 app_name: "<django_app_name>"
 
