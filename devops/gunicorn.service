@@ -1,17 +1,13 @@
 [Unit]
-Description=Gunicorn service
+Description=gunicorn daemon
 After=network.target
 
 [Service]
-User=<your username>
-Group=<your group name>
-WorkingDirectory=<path to your Django project directory>
-ExecStart=<path to your virtual environment>/bin/gunicorn \
-          --access-logfile - \
-          --workers <number of Gunicorn worker processes to spawn> \
-          --bind unix:/run/gunicorn.sock \
-          <name of your Django project>.wsgi:application --bind 0.0.0.0:<port number>
+User=ubuntu
+Group=www-data
+WorkingDirectory={{ gunicorn_working_directory }}
+ExecStart={{ gunicorn_exec_start }}
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
-
