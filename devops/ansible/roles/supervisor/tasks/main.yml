@@ -1,12 +1,19 @@
 ---
 # Configure Supervisor
 
-# Copy the Supervisor configuration file to the system
-- name: Configure Supervisor
-  copy:
-    src: "{{ app_path }}/<src_supervisor_conf_path>/supervisor.conf"
+# append the Supervisor configuration file to the system
+- name: Append Supervisor configuration
+  lineinfile:
     dest: "{{ supervisor_conf_path }}"
-    remote_src: yes
+    line: |
+      [program:todoApp]
+      directory=/new-django/
+      command=/new-django/myvenv/bin/gunicorn todoApp.wsgi:application -w 4 -b 127.0.0.1:8002
+      user=ubuntu
+      autostart=true
+      autorestart=true
+      redirect_stderr=true
+    state: present
   # Notify the `Restart Supervisor` task to restart Supervisor after the configuration file is copied
   notify:
     - Restart Supervisor
